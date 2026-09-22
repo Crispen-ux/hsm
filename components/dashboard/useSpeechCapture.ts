@@ -44,6 +44,7 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
   const timer = useRef<number | null>(null);
   const language = useRef(PRIMARY_LANGUAGE);
   const onFinalRef = useRef(onFinal);
+  const userStopped = useRef(false);
 
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -57,6 +58,7 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
       if (timer.current !== null) {
         window.clearTimeout(timer.current);
       }
+      userStopped.current = true;
       recognition.current?.abort();
     };
   }, []);
@@ -76,15 +78,28 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
     }, SILENCE_TIMEOUT_MS);
   }, [clearTimer]);
 
-  const begin = useCallback(async () => {
+  const startInstance = useCallback(
+    async (instance: SpeechRecognitionLike) => {
+      recognition.current = instance;
+      dispatch({ type: "start" });
+      buzz();
+      armTimer();
+      try {
+        instance.start();
+      } catch {
+        clearTimer();
+        recognition.current = null;
+        dispatch({ type: "fail", reason: "error", message: "Voice capture could not start. Type the job instead." });
+      }
+    },
+    [armTimer, clearTimer],
+  );
+
+  const buildInstance = useCallback(() => {
     const Constructor = recognitionConstructor();
     if (!Constructor) {
       dispatch({ type: "support", supported: false });
-      return;
-    }
-    if (await microphoneDenied()) {
-      dispatch({ type: "fail", reason: "denied", message: "Microphone access is blocked. Allow it in your browser settings, or type the job instead." });
-      return;
+      return null;
     }
 
     const instance = new Constructor();
@@ -144,25 +159,37 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
 
     instance.onend = () => {
       clearTimer();
-      dispatch({ type: "end" });
-      dispatch({ type: "end" });
+      if (userStopped.current) {
+        userStopped.current = false;
+        dispatch({ type: "end" });
+        dispatch({ type: "end" });
+        return;
+      }
+      const next = buildInstance();
+      if (next) {
+        startInstance(next);
+      }
     };
 
-    recognition.current = instance;
-    dispatch({ type: "start" });
-    buzz();
-    armTimer();
-    try {
-      instance.start();
-    } catch {
-      clearTimer();
-      dispatch({ type: "fail", reason: "error", message: "Voice capture could not start. Type the job instead." });
+    return instance;
+  }, [armTimer, clearTimer, startInstance]);
+
+  const begin = useCallback(async () => {
+    if (await microphoneDenied()) {
+      dispatch({ type: "fail", reason: "denied", message: "Microphone access is blocked. Allow it in your browser settings, or type the job instead." });
+      return;
     }
-  }, [armTimer, clearTimer]);
+    userStopped.current = false;
+    const instance = buildInstance();
+    if (instance) {
+      await startInstance(instance);
+    }
+  }, [buildInstance, startInstance]);
 
   const stop = useCallback(() => {
     clearTimer();
     buzz();
+    userStopped.current = true;
     recognition.current?.stop();
   }, [clearTimer]);
 
