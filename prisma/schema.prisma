@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum JobType {
+  VEHICLE
+  CONTAINER
+  INDUSTRIAL
+
+  @@map("job_type")
+}
+
+enum ContainerSize {
+  FT20
+  FT40
+  FT40_HC
+  OTHER
+
+  @@map("container_size")
+}
+
+enum ContainerScope {
+  FLOOR_ONLY
+  INTERIOR_FULL
+  EXTERIOR_ONLY
+  FULL_SHELL
+
+  @@map("container_scope")
+}
+
+enum ServiceLocation {
+  ON_SITE
+  IN_YARD
+
+  @@map("service_location")
+}
+
+enum LineUnit {
+  EACH
+  SQM
+
+  @@map("line_unit")
+}
+
+enum ServiceInterest {
+  BAKKIE_BED
+  FULL_VEHICLE
+  TRAILER
+  CONTAINER
+  INDUSTRIAL
+  OTHER
+
+  @@map("service_interest")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  WON
+  LOST
+
+  @@map("lead_status")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+
+  @@map("invoice_status")
+}
+
+enum Role {
+  CREW
+  ADMIN
+
+  @@map("role")
+}
+
+model CrewUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String    @map("password_hash")
+  role         Role      @default(CREW)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  invoices     Invoice[]
+
+  @@map("crew_users")
+}
+
+model Lead {
+  id                String           @id @default(cuid())
+  fullName          String           @map("full_name")
+  phone             String
+  email             String?
+  serviceInterest   ServiceInterest  @map("service_interest")
+  vehicleMake       String?          @map("vehicle_make")
+  vehicleModel      String?          @map("vehicle_model")
+  containerSize     ContainerSize?   @map("container_size")
+  containerScope    ContainerScope?  @map("container_scope")
+  containerQuantity Int?             @map("container_quantity")
+  serviceLocation   ServiceLocation? @map("service_location")
+  siteLocation      String?          @map("site_location")
+  siteAccessNotes   String?          @map("site_access_notes")
+  hasPhotos         Boolean          @default(false) @map("has_photos")
+  message           String?
+  source            String           @default("WEBSITE")
+  status            LeadStatus       @default(NEW)
+  consentGivenAt    DateTime         @map("consent_given_at")
+  ipHash            String?          @map("ip_hash")
+  referenceCode     String           @unique @map("reference_code")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([phone])
+  @@map("leads")
+}
+
+model Invoice {
+  id                 String           @id @default(cuid())
+  invoiceNumber      String           @unique @map("invoice_number")
+  idempotencyKey     String           @unique @map("idempotency_key")
+  jobType            JobType          @default(VEHICLE) @map("job_type")
+  status             InvoiceStatus    @default(DRAFT)
+  clientName         String           @map("client_name")
+  clientPhone        String           @map("client_phone")
+  vehicleDetails     String?          @map("vehicle_details")
+  assetDetails       String?          @map("asset_details")
+  containerSize      ContainerSize?   @map("container_size")
+  containerScope     ContainerScope?  @map("container_scope")
+  containerQuantity  Int?             @map("container_quantity")
+  serviceLocation    ServiceLocation? @map("service_location")
+  siteAddress        String?          @map("site_address")
+  rawVoiceTranscript String?          @map("raw_voice_transcript")
+  subtotalCents      Int              @map("subtotal_cents")
+  vatCents           Int              @map("vat_cents")
+  totalCents         Int              @map("total_cents")
+  depositCents       Int              @default(0) @map("deposit_cents")
+  currency           String           @default("ZAR")
+  createdById        String           @map("created_by_id")
+  createdBy          CrewUser         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  lines              InvoiceLine[]
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdById])
+  @@index([clientPhone])
+  @@map("invoices")
+}
+
+model InvoiceLine {
+  id             String   @id @default(cuid())
+  invoiceId      String   @map("invoice_id")
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  position       Int      @default(0)
+  description    String
+  unit           LineUnit @default(EACH)
+  quantityMilli  Int      @map("quantity_milli")
+  unitPriceCents Int      @map("unit_price_cents")
+  lineTotalCents Int      @map("line_total_cents")
+  tierKey        String?  @map("tier_key")
+
+  @@index([invoiceId])
+  @@map("invoice_lines")
+}
+
+model InvoiceCounter {
+  year    Int @id
+  lastSeq Int @default(0) @map("last_seq")
+
+  @@map("invoice_counters")
+}
+
+model RateLimitBucket {
+  key         String   @id
+  count       Int      @default(0)
+  windowStart DateTime @map("window_start")
+
+  @@index([windowStart])
+  @@map("rate_limit_buckets")
+}
