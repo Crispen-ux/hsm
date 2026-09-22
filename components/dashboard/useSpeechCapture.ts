@@ -45,6 +45,7 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
   const language = useRef(PRIMARY_LANGUAGE);
   const onFinalRef = useRef(onFinal);
   const userStopped = useRef(false);
+  const suppressNext = useRef(false);
 
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -78,29 +79,19 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
     }, SILENCE_TIMEOUT_MS);
   }, [clearTimer]);
 
-  const startInstance = useCallback(
-    async (instance: SpeechRecognitionLike) => {
-      recognition.current = instance;
-      dispatch({ type: "start" });
-      buzz();
-      armTimer();
-      try {
-        instance.start();
-      } catch {
-        clearTimer();
-        recognition.current = null;
-        dispatch({ type: "fail", reason: "error", message: "Voice capture could not start. Type the job instead." });
-      }
-    },
-    [armTimer, clearTimer],
-  );
-
-  const buildInstance = useCallback(() => {
+  const begin = useCallback(async () => {
     const Constructor = recognitionConstructor();
     if (!Constructor) {
       dispatch({ type: "support", supported: false });
-      return null;
+      return;
     }
+    if (await microphoneDenied()) {
+      dispatch({ type: "fail", reason: "denied", message: "Microphone access is blocked. Allow it in your browser settings, or type the job instead." });
+      return;
+    }
+
+    userStopped.current = false;
+    suppressNext.current = false;
 
     const instance = new Constructor();
     instance.lang = language.current;
@@ -110,6 +101,12 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
 
     instance.onresult = (event) => {
       armTimer();
+
+      if (suppressNext.current) {
+        suppressNext.current = false;
+        return;
+      }
+
       let interim = "";
       for (let index = event.resultIndex; index < event.results.length; index += 1) {
         const result = event.results[index];
@@ -134,7 +131,6 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
           dispatch({ type: "fail", reason: "denied", message: "Microphone access was refused. Allow it in your browser settings, or type the job instead." });
           break;
         case "no-speech":
-          dispatch({ type: "fail", reason: "timeout", message: "We did not hear anything. Try again, or type the job instead." });
           break;
         case "audio-capture":
           dispatch({ type: "fail", reason: "error", message: "No microphone was found. Type the job instead." });
@@ -153,38 +149,38 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
         case "aborted":
           break;
         default:
-          dispatch({ type: "fail", reason: "error", message: "Voice capture stopped unexpectedly. Type the job instead." });
+          break;
       }
     };
 
     instance.onend = () => {
       clearTimer();
       if (userStopped.current) {
-        userStopped.current = false;
         dispatch({ type: "end" });
         dispatch({ type: "end" });
         return;
       }
-      const next = buildInstance();
-      if (next) {
-        startInstance(next);
+      suppressNext.current = true;
+      try {
+        instance.start();
+        armTimer();
+      } catch {
+        dispatch({ type: "end" });
+        dispatch({ type: "end" });
       }
     };
 
-    return instance;
-  }, [armTimer, clearTimer, startInstance]);
-
-  const begin = useCallback(async () => {
-    if (await microphoneDenied()) {
-      dispatch({ type: "fail", reason: "denied", message: "Microphone access is blocked. Allow it in your browser settings, or type the job instead." });
-      return;
+    recognition.current = instance;
+    dispatch({ type: "start" });
+    buzz();
+    armTimer();
+    try {
+      instance.start();
+    } catch {
+      clearTimer();
+      dispatch({ type: "fail", reason: "error", message: "Voice capture could not start. Type the job instead." });
     }
-    userStopped.current = false;
-    const instance = buildInstance();
-    if (instance) {
-      await startInstance(instance);
-    }
-  }, [buildInstance, startInstance]);
+  }, [armTimer, clearTimer]);
 
   const stop = useCallback(() => {
     clearTimer();
