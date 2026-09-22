@@ -461,11 +461,13 @@ body {
     background: white !important;
     color: #111 !important;
     font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 20px !important;
   }
 
   header, nav, .btn, .btn-primary, .btn-secondary, .chamfer, .chamfer-2,
   [data-testid="mic-button"], [data-testid="voice-status"], [data-testid="toggle-manual"],
-  .mic-ring, .print-document, .space-y-10 > section, .flex.flex-wrap.gap-3,
+  .mic-ring, .space-y-10 > section, .flex.flex-wrap.gap-3,
   .mt-6, .mt-8, .mt-10, .mt-12, .pb-36, [role="alert"], [role="status"] {
     display: none !important;
   }
@@ -476,7 +478,6 @@ body {
 
   .print-document * {
     color: #111 !important;
-    background: transparent !important;
   }
 }
 
@@ -484,22 +485,36 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 3px solid #111;
+  border-bottom: 3px solid #b91c1c;
   padding-bottom: 16px;
   margin-bottom: 24px;
 }
 
+.print-brand {
+  display: flex;
+  flex-direction: column;
+}
+
 .print-company {
-  font-size: 22pt;
-  font-weight: 700;
+  font-size: 32pt;
+  font-weight: 900;
   margin: 0;
-  color: #111 !important;
+  color: #b91c1c !important;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
 .print-tagline {
-  font-size: 10pt;
+  font-size: 11pt;
+  font-weight: 600;
+  color: #111 !important;
+  margin: 2px 0 0;
+}
+
+.print-tagline-sm {
+  font-size: 9pt;
   color: #555 !important;
-  margin: 4px 0 0;
+  margin: 2px 0 0;
 }
 
 .print-right {
@@ -507,79 +522,113 @@ body {
 }
 
 .print-title {
-  font-size: 18pt;
+  font-size: 20pt;
   font-weight: 700;
   margin: 0;
-  color: #111 !important;
+  color: #b91c1c !important;
 }
 
 .print-meta {
   font-size: 10pt;
-  color: #555 !important;
-  margin: 2px 0;
+  color: #333 !important;
+  margin: 4px 0 0;
 }
 
 .print-section {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .print-section-title {
   font-size: 11pt;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 6px;
+  font-weight: 700;
+  margin: 0 0 4px;
   color: #111 !important;
 }
 
 .print-section p {
   margin: 2px 0;
   font-size: 10pt;
+  color: #333 !important;
+}
+
+.print-client-name {
+  font-size: 14pt;
+  font-weight: 600;
+  color: #111 !important;
+  margin: 4px 0 0 !important;
 }
 
 .print-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 16px 0;
+  margin: 20px 0;
   font-size: 10pt;
 }
 
 .print-table th {
+  background: #b91c1c !important;
+  color: white !important;
   text-align: left;
-  border-bottom: 2px solid #111;
-  padding: 6px 8px;
+  padding: 10px 12px;
   font-weight: 600;
-  color: #111 !important;
-}
-
-.print-table td {
-  border-bottom: 1px solid #ddd;
-  padding: 6px 8px;
-}
-
-.print-totals {
-  margin-left: auto;
-  width: 240px;
   font-size: 10pt;
 }
 
-.print-totals div {
-  padding: 3px 0;
+.print-table td {
+  border-bottom: 1px solid #e5e5e5;
+  padding: 10px 12px;
+  color: #111 !important;
 }
 
-.print-footer {
-  margin-top: 32px;
-  border-top: 1px solid #ddd;
-  padding-top: 12px;
-  font-size: 9pt;
-  color: #666 !important;
+.print-table tr:last-child td {
+  border-bottom: 2px solid #111;
 }
 
-.print-footer p {
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.font-semibold { font-weight: 600; }
+
+.print-totals-section {
+  margin-left: auto;
+  width: 280px;
+  font-size: 10pt;
+}
+
+.print-totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  color: #333 !important;
+}
+
+.print-total-due {
+  border-top: 2px solid #111;
+  padding-top: 8px;
+  margin-top: 4px;
+  font-size: 12pt;
+  font-weight: 700;
+  color: #111 !important;
+}
+
+.print-balance {
+  font-weight: 600;
+  color: #b91c1c !important;
+}
+
+.print-terms {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 10pt;
+  color: #333 !important;
+}
+
+.print-terms li {
   margin: 2px 0;
 }
 
-.print-contact {
-  font-weight: 600;
-  color: #111 !important;
+.print-footer-thanks {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 11pt;
+  color: #333 !important;
 }
