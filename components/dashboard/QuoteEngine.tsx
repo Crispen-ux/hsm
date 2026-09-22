@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Field } from "@/components/ui/Field";
+import { ProductSelect } from "@/components/dashboard/ProductSelect";
 import {
   CONTAINER_SCOPES,
   CONTAINER_SCOPE_LABELS,
@@ -23,6 +24,7 @@ import { whatsappHref, SITE_CONFIG } from "@/lib/site-config";
 import { formatQuoteWhatsAppMessage, buildQuoteShareMessage } from "@/lib/quote-whatsapp";
 import type { QuotePrefill } from "@/lib/quote-link";
 import { computeInvoiceTotals } from "@/lib/money";
+import type { CatalogueProduct, ProductCategory } from "@/lib/product-catalogue";
 
 interface QuoteLine {
   id: string;
@@ -170,6 +172,22 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
     setData((prev) => ({ ...prev, lines: prev.lines.filter((l) => l.id !== id) }));
   }, []);
 
+  const selectProduct = useCallback((lineId: string, product: CatalogueProduct) => {
+    setData((prev) => ({
+      ...prev,
+      lines: prev.lines.map((l) =>
+        l.id === lineId
+          ? {
+              ...l,
+              description: product.name,
+              unit: product.unit,
+              unitPrice: product.unitPriceCents > 0 ? String(product.unitPriceCents / 100) : l.unitPrice,
+            }
+          : l,
+      ),
+    }));
+  }, []);
+
   const allLines = useMemo(() => {
     const auto = autoLines(data);
     const manual = data.lines.filter((l) => !l.id.startsWith("auto-"));
@@ -274,13 +292,23 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
           {allLines.map((line) => {
             const isAuto = line.id.startsWith("auto-");
             return (
-              <div key={line.id} className={cn("grid gap-3 border p-3", isAuto ? "border-hawk-crimson/30 bg-hawk-crimson/5" : "border-zinc-700")} style={{ gridTemplateColumns: "1fr auto auto auto" }}>
-                <input type="text" value={line.description} onChange={(e) => updateLine(line.id, { description: e.target.value })} disabled={isAuto} placeholder="Description" className="field-input col-span-1" />
-                <input type="text" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} disabled={isAuto} placeholder={line.unit === "SQM" ? "m²" : "Qty"} className="field-input w-20" />
-                <input type="text" value={line.unitPrice} onChange={(e) => updateLine(line.id, { unitPrice: e.target.value })} disabled={isAuto} placeholder="R each" className="field-input w-24" />
-                {!isAuto ? (
-                  <button type="button" onClick={() => removeLine(line.id)} className="min-h-[44px] px-2 text-sm text-zinc-400">×</button>
-                ) : <span />}
+              <div key={line.id} className={cn("space-y-2 border p-3", isAuto ? "border-hawk-crimson/30 bg-hawk-crimson/5" : "border-zinc-700")}>
+                {!isAuto && (
+                  <ProductSelect
+                    id={`q-product-${line.id}`}
+                    label="Pick from catalogue"
+                    hint="optional"
+                    onSelect={(product) => selectProduct(line.id, product)}
+                  />
+                )}
+                <div className="grid gap-3" style={{ gridTemplateColumns: "1fr auto auto auto" }}>
+                  <input type="text" value={line.description} onChange={(e) => updateLine(line.id, { description: e.target.value })} disabled={isAuto} placeholder="Description" className="field-input col-span-1" />
+                  <input type="text" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} disabled={isAuto} placeholder={line.unit === "SQM" ? "m²" : "Qty"} className="field-input w-20" />
+                  <input type="text" value={line.unitPrice} onChange={(e) => updateLine(line.id, { unitPrice: e.target.value })} disabled={isAuto} placeholder="R each" className="field-input w-24" />
+                  {!isAuto ? (
+                    <button type="button" onClick={() => removeLine(line.id)} className="min-h-[44px] px-2 text-sm text-zinc-400">×</button>
+                  ) : <span />}
+                </div>
               </div>
             );
           })}
@@ -309,20 +337,21 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
       {/* Print-only quote document */}
       <div className="print-document hidden">
         <div className="print-header">
-          <div>
-            <h1 className="print-company">Hawk Mobile Rubberising</h1>
-            <p className="print-tagline">Polyurea & Rubber Coatings</p>
+          <div className="print-brand">
+            <h1 className="print-company">HAWK</h1>
+            <p className="print-tagline">Mobile Rubberising</p>
+            <p className="print-tagline-sm">Polyurea & Rubber Coatings</p>
           </div>
           <div className="print-right">
             <h2 className="print-title">QUOTATION</h2>
-            <p className="print-meta">{quoteNumber}</p>
-            <p className="print-meta">{new Date().toLocaleDateString("en-ZA")}</p>
+            <p className="print-meta">Quote Date: {new Date().toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}</p>
+            <p className="print-meta">Quote Number: {quoteNumber}</p>
           </div>
         </div>
 
         <div className="print-section">
-          <h3 className="print-section-title">Client Details</h3>
-          <p>{data.clientName || "—"}</p>
+          <h3 className="print-section-title">Bill To:</h3>
+          <p className="print-client-name">{data.clientName || "—"}</p>
           <p>{data.clientPhone || "—"}</p>
           {data.clientEmail && <p>{data.clientEmail}</p>}
           {data.siteAddress && <p>Site: {data.siteAddress}</p>}
@@ -330,13 +359,18 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
 
         <div className="print-section">
           <h3 className="print-section-title">Job Description</h3>
-          <p>{data.jobType === "VEHICLE" ? `Vehicle Coating: ${data.vehicleDetails || "—"}` : data.jobType === "CONTAINER" ? `Container: ${CONTAINER_SIZE_LABELS[data.containerSize]} - ${CONTAINER_SCOPE_LABELS[data.containerScope]} × ${data.containerQuantity}` : "Industrial Coating"}</p>
+          <p>{data.jobType === "VEHICLE" ? `Vehicle Coating: ${data.vehicleDetails || "—"}` : data.jobType === "CONTAINER" ? `Container: ${CONTAINER_SIZE_LABELS[data.containerSize]} - ${CONTAINER_SCOPE_LABELS[data.containerScope]} x ${data.containerQuantity}` : "Industrial Coating"}</p>
           {data.serviceLocation && <p>Location: {SERVICE_LOCATION_LABELS[data.serviceLocation]}</p>}
         </div>
 
         <table className="print-table">
           <thead>
-            <tr><th>Description</th><th>Qty</th><th>Unit</th><th className="text-right">Amount</th></tr>
+            <tr>
+              <th>Description</th>
+              <th className="text-center">Qty</th>
+              <th className="text-center">Unit</th>
+              <th className="text-right">Total (ZAR)</th>
+            </tr>
           </thead>
           <tbody>
             {allLines.map((line) => {
@@ -346,19 +380,28 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
               return (
                 <tr key={line.id}>
                   <td>{line.description}</td>
-                  <td>{line.quantity}</td>
-                  <td>{line.unit === "SQM" ? "m²" : "each"}</td>
-                  <td className="text-right">{formatZar(total)}</td>
+                  <td className="text-center">{line.quantity}</td>
+                  <td className="text-center">{line.unit === "SQM" ? "m\u00B2" : "each"}</td>
+                  <td className="text-right font-semibold">{formatZar(total)}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
 
-        <div className="print-totals">
-          <div className="flex justify-between"><span>Subtotal</span><span>{formatZar(totals.subtotal)}</span></div>
-          <div className="flex justify-between"><span>VAT 15%</span><span>{formatZar(totals.vat)}</span></div>
-          <div className="flex justify-between font-bold text-lg border-t border-black pt-1"><span>TOTAL</span><span>{formatZar(totals.total)}</span></div>
+        <div className="print-totals-section">
+          <div className="print-totals-row">
+            <span>Subtotal:</span>
+            <span>{formatZar(totals.subtotal)}</span>
+          </div>
+          <div className="print-totals-row">
+            <span>VAT (15%):</span>
+            <span>{formatZar(totals.vat)}</span>
+          </div>
+          <div className="print-totals-row print-total-due">
+            <span>TOTAL DUE:</span>
+            <span>{formatZar(totals.total)}</span>
+          </div>
         </div>
 
         {data.notes && (
@@ -368,10 +411,17 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
           </div>
         )}
 
-        <div className="print-footer">
-          <p>Areas are approximate. Final price confirmed after inspection.</p>
-          <p>Valid for 30 days from date of issue.</p>
-          <p className="print-contact">Hawk Mobile Rubberising | www.hawkmobile.co.za</p>
+        <div className="print-section">
+          <h3 className="print-section-title">Terms &amp; Conditions</h3>
+          <ul className="print-terms">
+            <li>Areas are approximate. Final price confirmed after inspection.</li>
+            <li>Valid for 30 days from date of issue.</li>
+            <li>Payment due upon acceptance of quote.</li>
+          </ul>
+        </div>
+
+        <div className="print-footer-thanks">
+          <p><em>Thank you for your business</em></p>
         </div>
       </div>
     </div>

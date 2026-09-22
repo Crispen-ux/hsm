@@ -49,6 +49,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <Link href="/dashboard/quotes" className="text-sm text-zinc-400 hover:text-zinc-200 min-h-[44px] flex items-center">
           Quotes
         </Link>
+        <Link href="/dashboard/catalogue" className="text-sm text-zinc-400 hover:text-zinc-200 min-h-[44px] flex items-center">
+          Catalogue
+        </Link>
       </nav>
       <main id="main" className="px-4 py-6">
         {children}

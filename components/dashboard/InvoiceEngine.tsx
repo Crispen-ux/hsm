@@ -150,6 +150,23 @@ export function InvoiceEngine({ invoices, loadError }: InvoiceEngineProps) {
     [],
   );
 
+  const selectProduct = useCallback((key: string, product: import("@/lib/product-catalogue").CatalogueProduct) => {
+    setDraft((current) => ({
+      ...current,
+      lines: current.lines.map((line) =>
+        line.key === key
+          ? {
+              ...line,
+              description: product.name,
+              unit: product.unit,
+              unitPrice: product.unitPriceCents > 0 ? String(product.unitPriceCents / 100) : line.unitPrice,
+              auto: false,
+            }
+          : line,
+      ),
+    }));
+  }, []);
+
   const changeTranscript = useCallback((value: string) => setDraft((current) => reparse({ ...current, transcript: value })), [reparse]);
   const clearTranscript = useCallback(() => setDraft((current) => ({ ...current, transcript: "" })), []);
 
@@ -275,7 +292,7 @@ export function InvoiceEngine({ invoices, loadError }: InvoiceEngineProps) {
       <VoicePanel speech={speech} transcript={draft.transcript} parsed={parsed} onTranscriptChange={changeTranscript} onClear={clearTranscript} />
       <ParsedChips parsed={parsed} />
 
-      <ReviewForm draft={draft} errors={errors} setField={setField} onLineChange={changeLine} onAddLine={addLine} onRemoveLine={removeLine} />
+      <ReviewForm draft={draft} errors={errors} setField={setField} onLineChange={changeLine} onAddLine={addLine} onRemoveLine={removeLine} onProductSelect={selectProduct} />
 
       <div className="mt-10">
         <TotalsReadout result={totals} />

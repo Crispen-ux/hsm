@@ -16,7 +16,7 @@ interface VoicePanelProps {
 
 const STATUS_TEXT: Readonly<Record<string, string>> = {
   idle: "Tap and say the job",
-  listening: "Listening. Tap to stop.",
+  listening: "Listening... tap to stop",
   processing: "Working it out",
 };
 
@@ -62,8 +62,14 @@ export function VoicePanel({ speech, transcript, parsed, onTranscriptChange, onC
             </button>
           </div>
 
-          <p aria-live="polite" data-testid="voice-status" className="mt-4 text-center text-zinc-200">
-            {failure ? state.message : STATUS_TEXT[state.status] ?? STATUS_TEXT.idle}
+          <p aria-live="polite" data-testid="voice-status" className="mt-4 text-center text-sm text-zinc-200">
+            {failure ? (
+              <span className="text-hawk-gold">{state.message}</span>
+            ) : listening ? (
+              <span className="text-emerald-400">{STATUS_TEXT[state.status]}</span>
+            ) : (
+              STATUS_TEXT[state.status] ?? STATUS_TEXT.idle
+            )}
           </p>
         </div>
 
@@ -82,7 +88,9 @@ export function VoicePanel({ speech, transcript, parsed, onTranscriptChange, onC
               {state.interim ? <span className="italic text-zinc-400"> {state.interim}</span> : null}
             </p>
           ) : (
-            <p className="text-zinc-400">For example: Hilux full, client Sipho, deposit five hundred.</p>
+            <p className="text-sm text-zinc-500">
+              Try: <span className="text-zinc-400">&quot;Hilux full, client Sipho, deposit five hundred&quot;</span>
+            </p>
           )}
         </div>
 

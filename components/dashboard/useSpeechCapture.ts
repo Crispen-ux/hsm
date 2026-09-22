@@ -3,9 +3,18 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { INITIAL_SPEECH_STATE, speechReducer, type SpeechState } from "@/lib/speech-state";
 
-const SILENCE_TIMEOUT_MS = 10_000;
-const PRIMARY_LANGUAGE = "en-ZA";
-const FALLBACK_LANGUAGE = "en-GB";
+const SILENCE_TIMEOUT_MS = 30_000;
+const SILENCE_WARNING_MS = 20_000;
+const LANGUAGE_CHAIN = ["en-ZA", "en-GB", "en-US", "en-AU", "en-IN"] as const;
+const RESTART_BACKOFF_MS = [0, 200, 500, 1000, 2000];
+const MAX_RESTARTS = 5;
+const NOISE_MIN_LENGTH = 2;
+const NOISE_WORDS = new Set([
+  "uh", "um", "er", "ah", "hmm", "mhm", "hm", "oh", "okay", "ok", "yes", "no",
+  "the", "a", "an", "i", "you", "he", "she", "it", "we", "they", "me", "him",
+  "her", "us", "them", "my", "your", "his", "its", "our", "their",
+]);
+const FILLER_PATTERN = /\b(?:um|uh|er|ah|hmm|mhm|hm|oh|like|you know|basically|actually|so|right|just)\b/gi;
 
 function recognitionConstructor(): SpeechRecognitionConstructorLike | null {
   if (typeof window === "undefined") {
@@ -31,6 +40,21 @@ function buzz(): void {
   }
 }
 
+function cleanTranscript(raw: string): string {
+  return raw
+    .replace(FILLER_PATTERN, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function isNoise(text: string): boolean {
+  const cleaned = text.trim().toLowerCase();
+  if (cleaned.length < NOISE_MIN_LENGTH) return true;
+  if (NOISE_WORDS.has(cleaned)) return true;
+  if (cleaned.split(/\s+/).length === 1 && NOISE_WORDS.has(cleaned)) return true;
+  return false;
+}
+
 export interface SpeechCaptureApi {
   state: SpeechState;
   start: () => Promise<void>;
@@ -42,10 +66,14 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
   const [state, dispatch] = useReducer(speechReducer, INITIAL_SPEECH_STATE);
   const recognition = useRef<SpeechRecognitionLike | null>(null);
   const timer = useRef<number | null>(null);
-  const language = useRef(PRIMARY_LANGUAGE);
+  const warningTimer = useRef<number | null>(null);
+  const languageIndex = useRef(0);
   const onFinalRef = useRef(onFinal);
   const userStopped = useRef(false);
-  const suppressNext = useRef(false);
+  const restartCount = useRef(0);
+  const lastFinalText = useRef("");
+  const lastFinalTime = useRef(0);
+  const seenFinals = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -56,28 +84,33 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
       dispatch({ type: "support", supported: false });
     }
     return () => {
-      if (timer.current !== null) {
-        window.clearTimeout(timer.current);
-      }
+      clearAllTimers();
       userStopped.current = true;
       recognition.current?.abort();
     };
   }, []);
 
-  const clearTimer = useCallback(() => {
+  const clearAllTimers = useCallback(() => {
     if (timer.current !== null) {
       window.clearTimeout(timer.current);
       timer.current = null;
     }
+    if (warningTimer.current !== null) {
+      window.clearTimeout(warningTimer.current);
+      warningTimer.current = null;
+    }
   }, []);
 
   const armTimer = useCallback(() => {
-    clearTimer();
+    clearAllTimers();
+    warningTimer.current = window.setTimeout(() => {
+      dispatch({ type: "interim", text: "Still listening... speak up or tap to stop." });
+    }, SILENCE_WARNING_MS);
     timer.current = window.setTimeout(() => {
       recognition.current?.abort();
       dispatch({ type: "fail", reason: "timeout", message: "We did not hear anything. Try again, or type the job instead." });
     }, SILENCE_TIMEOUT_MS);
-  }, [clearTimer]);
+  }, [clearAllTimers]);
 
   const begin = useCallback(async () => {
     const Constructor = recognitionConstructor();
@@ -91,103 +124,140 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
     }
 
     userStopped.current = false;
-    suppressNext.current = false;
+    restartCount.current = 0;
+    seenFinals.current.clear();
+    lastFinalText.current = "";
+    lastFinalTime.current = 0;
+    languageIndex.current = 0;
 
-    const instance = new Constructor();
-    instance.lang = language.current;
-    instance.interimResults = true;
-    instance.continuous = true;
-    instance.maxAlternatives = 1;
+    const startRecognition = () => {
+      const lang = LANGUAGE_CHAIN[languageIndex.current] ?? "en-GB";
 
-    instance.onresult = (event) => {
-      armTimer();
+      const instance = new Constructor();
+      instance.lang = lang;
+      instance.interimResults = true;
+      instance.continuous = true;
+      instance.maxAlternatives = 1;
 
-      if (suppressNext.current) {
-        suppressNext.current = false;
-        return;
-      }
+      instance.onresult = (event) => {
+        armTimer();
 
-      let interim = "";
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        const result = event.results[index];
-        const text = result?.[0]?.transcript ?? "";
-        if (result?.isFinal) {
-          onFinalRef.current(text.trim());
-          dispatch({ type: "final" });
-        } else {
-          interim += text;
-        }
-      }
-      if (interim) {
-        dispatch({ type: "interim", text: interim });
-      }
-    };
+        let interim = "";
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const result = event.results[index];
+          const text = result?.[0]?.transcript ?? "";
+          if (result?.isFinal) {
+            const cleaned = cleanTranscript(text);
+            if (!cleaned) continue;
+            if (isNoise(cleaned)) continue;
 
-    instance.onerror = (event) => {
-      clearTimer();
-      switch (event.error) {
-        case "not-allowed":
-        case "service-not-allowed":
-          dispatch({ type: "fail", reason: "denied", message: "Microphone access was refused. Allow it in your browser settings, or type the job instead." });
-          break;
-        case "no-speech":
-          break;
-        case "audio-capture":
-          dispatch({ type: "fail", reason: "error", message: "No microphone was found. Type the job instead." });
-          break;
-        case "network":
-          dispatch({ type: "fail", reason: "error", message: "Voice capture needs a connection. Type the job instead." });
-          break;
-        case "language-not-supported":
-          if (language.current === PRIMARY_LANGUAGE) {
-            language.current = FALLBACK_LANGUAGE;
-            void begin();
+            const dedupeKey = cleaned.toLowerCase();
+            const now = Date.now();
+            if (
+              dedupeKey === lastFinalText.current &&
+              now - lastFinalTime.current < 3000
+            ) {
+              continue;
+            }
+            if (seenFinals.current.has(dedupeKey)) {
+              continue;
+            }
+
+            seenFinals.current.add(dedupeKey);
+            lastFinalText.current = dedupeKey;
+            lastFinalTime.current = now;
+
+            onFinalRef.current(cleaned);
+            dispatch({ type: "final" });
           } else {
-            dispatch({ type: "fail", reason: "error", message: "Voice capture does not support this language here. Type the job instead." });
+            interim += text;
           }
-          break;
-        case "aborted":
-          break;
-        default:
-          break;
-      }
-    };
+        }
+        if (interim) {
+          dispatch({ type: "interim", text: interim });
+        }
+      };
 
-    instance.onend = () => {
-      clearTimer();
-      if (userStopped.current) {
-        dispatch({ type: "end" });
-        dispatch({ type: "end" });
-        return;
-      }
-      suppressNext.current = true;
+      instance.onerror = (event) => {
+        clearAllTimers();
+        switch (event.error) {
+          case "not-allowed":
+          case "service-not-allowed":
+            dispatch({ type: "fail", reason: "denied", message: "Microphone access was refused. Allow it in your browser settings, or type the job instead." });
+            break;
+          case "no-speech":
+            break;
+          case "audio-capture":
+            dispatch({ type: "fail", reason: "error", message: "No microphone was found. Type the job instead." });
+            break;
+          case "network":
+            dispatch({ type: "fail", reason: "error", message: "Voice capture needs a connection. Type the job instead." });
+            break;
+          case "language-not-supported":
+            if (languageIndex.current < LANGUAGE_CHAIN.length - 1) {
+              languageIndex.current += 1;
+              restartRecognition();
+            } else {
+              dispatch({ type: "fail", reason: "error", message: "Voice capture does not support this language here. Type the job instead." });
+            }
+            break;
+          case "aborted":
+            break;
+          default:
+            break;
+        }
+      };
+
+      instance.onend = () => {
+        clearAllTimers();
+        if (userStopped.current) {
+          dispatch({ type: "end" });
+          return;
+        }
+
+        restartCount.current += 1;
+        if (restartCount.current > MAX_RESTARTS) {
+          dispatch({ type: "fail", reason: "error", message: "Voice capture stopped unexpectedly. Try again, or type the job instead." });
+          return;
+        }
+
+        const backoff = RESTART_BACKOFF_MS[Math.min(restartCount.current, RESTART_BACKOFF_MS.length - 1)];
+        setTimeout(() => {
+          if (userStopped.current) return;
+          restartRecognition();
+        }, backoff);
+      };
+
+      recognition.current = instance;
+      dispatch({ type: "start" });
+      buzz();
+      armTimer();
       try {
         instance.start();
-        armTimer();
       } catch {
-        dispatch({ type: "end" });
-        dispatch({ type: "end" });
+        clearAllTimers();
+        dispatch({ type: "fail", reason: "error", message: "Voice capture could not start. Type the job instead." });
       }
     };
 
-    recognition.current = instance;
-    dispatch({ type: "start" });
-    buzz();
-    armTimer();
-    try {
-      instance.start();
-    } catch {
-      clearTimer();
-      dispatch({ type: "fail", reason: "error", message: "Voice capture could not start. Type the job instead." });
-    }
-  }, [armTimer, clearTimer]);
+    const restartRecognition = () => {
+      try {
+        recognition.current?.abort();
+      } catch {
+        // ignore
+      }
+      startRecognition();
+    };
+
+    startRecognition();
+  }, [armTimer, clearAllTimers]);
 
   const stop = useCallback(() => {
-    clearTimer();
+    clearAllTimers();
     buzz();
     userStopped.current = true;
     recognition.current?.stop();
-  }, [clearTimer]);
+  }, [clearAllTimers]);
 
   const toggleManual = useCallback(() => dispatch({ type: "toggle-manual" }), []);
 

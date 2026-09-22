@@ -11,6 +11,7 @@ import {
   type ServiceLocation,
 } from "@/lib/domain";
 import type { DraftLine, FieldErrorMap, InvoiceDraft } from "@/lib/invoice-draft";
+import type { CatalogueProduct } from "@/lib/product-catalogue";
 import { formatZar } from "@/lib/money";
 import { VEHICLE_TIERS } from "@/lib/pricing-tiers";
 
@@ -21,6 +22,7 @@ interface ReviewFormProps {
   onLineChange: (key: string, patch: Partial<DraftLine>) => void;
   onAddLine: () => void;
   onRemoveLine: (key: string) => void;
+  onProductSelect?: (key: string, product: CatalogueProduct) => void;
 }
 
 const SIZES: readonly Exclude<ContainerSize, "OTHER">[] = ["FT20", "FT40", "FT40_HC"];
@@ -56,7 +58,7 @@ function TextField(props: {
   );
 }
 
-export function ReviewForm({ draft, errors, setField, onLineChange, onAddLine, onRemoveLine }: ReviewFormProps) {
+export function ReviewForm({ draft, errors, setField, onLineChange, onAddLine, onRemoveLine, onProductSelect }: ReviewFormProps) {
   return (
     <div className="mt-8 space-y-10">
       <section aria-labelledby="client-title">
@@ -209,7 +211,7 @@ export function ReviewForm({ draft, errors, setField, onLineChange, onAddLine, o
         ) : null}
       </section>
 
-      <LinesEditor lines={draft.lines} errors={errors} onChange={onLineChange} onAdd={onAddLine} onRemove={onRemoveLine} />
+      <LinesEditor lines={draft.lines} errors={errors} onChange={onLineChange} onAdd={onAddLine} onRemove={onRemoveLine} onProductSelect={onProductSelect} />
 
       <section aria-labelledby="deposit-title">
         <h2 id="deposit-title" className="display-narrow text-chrome text-2xl">

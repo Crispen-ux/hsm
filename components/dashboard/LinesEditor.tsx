@@ -1,7 +1,9 @@
 "use client";
 
 import { Field } from "@/components/ui/Field";
+import { ProductSelect } from "@/components/dashboard/ProductSelect";
 import type { DraftLine, FieldErrorMap } from "@/lib/invoice-draft";
+import type { CatalogueProduct } from "@/lib/product-catalogue";
 import { formatZar, lineTotalCentsForQuantity, MoneyRangeError, parseRandsToCents } from "@/lib/money";
 import { parseQuantityToMilli } from "@/lib/quantity";
 
@@ -11,6 +13,7 @@ interface LinesEditorProps {
   onChange: (key: string, patch: Partial<DraftLine>) => void;
   onAdd: () => void;
   onRemove: (key: string) => void;
+  onProductSelect?: (key: string, product: CatalogueProduct) => void;
 }
 
 function lineTotal(line: DraftLine): string | null {
@@ -29,7 +32,7 @@ function lineTotal(line: DraftLine): string | null {
   }
 }
 
-export function LinesEditor({ lines, errors, onChange, onAdd, onRemove }: LinesEditorProps) {
+export function LinesEditor({ lines, errors, onChange, onAdd, onRemove, onProductSelect }: LinesEditorProps) {
   return (
     <section aria-labelledby="lines-title">
       <h2 id="lines-title" className="display-narrow text-chrome text-2xl">
@@ -46,6 +49,16 @@ export function LinesEditor({ lines, errors, onChange, onAdd, onRemove }: LinesE
           };
           return (
             <li key={line.key} className="border border-hawk-obsidian-border bg-hawk-obsidian-card p-4" data-testid="line">
+              {!line.auto && onProductSelect && (
+                <div className="mb-3">
+                  <ProductSelect
+                    id={`f-lines-${index}-product`}
+                    label="Pick from catalogue"
+                    hint="optional"
+                    onSelect={(product) => onProductSelect(line.key, product)}
+                  />
+                </div>
+              )}
               <Field id={`f-lines-${index}-description`} label="Description" errors={errorFor("description")}>
                 <input
                   id={`f-lines-${index}-description`}
