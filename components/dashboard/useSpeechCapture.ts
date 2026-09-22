@@ -144,20 +144,8 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
 
     instance.onend = () => {
       clearTimer();
-      if (recognition.current === instance) {
-        dispatch({ type: "start" });
-        setTimeout(() => {
-          if (recognition.current === instance) {
-            try {
-              instance.start();
-              armTimer();
-            } catch {
-              recognition.current = null;
-              dispatch({ type: "fail", reason: "error", message: "Voice capture stopped unexpectedly. Type the job instead." });
-            }
-          }
-        }, 200);
-      }
+      dispatch({ type: "end" });
+      dispatch({ type: "end" });
     };
 
     recognition.current = instance;
@@ -175,9 +163,7 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
   const stop = useCallback(() => {
     clearTimer();
     buzz();
-    const instance = recognition.current;
-    recognition.current = null;
-    instance?.stop();
+    recognition.current?.stop();
   }, [clearTimer]);
 
   const toggleManual = useCallback(() => dispatch({ type: "toggle-manual" }), []);
