@@ -9,9 +9,14 @@ export default async function DashboardPage() {
     <section>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="display-wide text-chrome text-[clamp(1.6rem,7vw,2.25rem)]">Recent invoices</h1>
-        <Link href="/dashboard/invoice-engine" className="btn btn-primary chamfer">
-          New invoice
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/dashboard/quotes" className="btn btn-secondary chamfer">
+            Quotes
+          </Link>
+          <Link href="/dashboard/invoice-engine" className="btn btn-primary chamfer">
+            New invoice
+          </Link>
+        </div>
       </div>
 
       {!result.ok ? (

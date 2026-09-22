@@ -42,6 +42,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         </Link>
         <LogoutButton />
       </header>
+      <nav className="flex gap-3 border-b border-hawk-obsidian-border px-4 py-2">
+        <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-zinc-200 min-h-[44px] flex items-center">
+          Invoices
+        </Link>
+        <Link href="/dashboard/quotes" className="text-sm text-zinc-400 hover:text-zinc-200 min-h-[44px] flex items-center">
+          Quotes
+        </Link>
+      </nav>
       <main id="main" className="px-4 py-6">
         {children}
       </main>
