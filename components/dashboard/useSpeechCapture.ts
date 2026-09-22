@@ -90,7 +90,7 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
     const instance = new Constructor();
     instance.lang = language.current;
     instance.interimResults = true;
-    instance.continuous = false;
+    instance.continuous = true;
     instance.maxAlternatives = 1;
 
     instance.onresult = (event) => {
