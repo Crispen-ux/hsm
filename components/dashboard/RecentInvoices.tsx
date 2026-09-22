@@ -56,9 +56,14 @@ export function RecentInvoices({ invoices, loadError, queued, onDiscard, onChang
       {queued.length > 0 ? (
         <ul className="mt-4 divide-y divide-hawk-obsidian-border border border-hawk-gold/50 bg-hawk-obsidian-card" data-testid="queued-list">
           {queued.map((item) => (
-            <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-zinc-100">{item.label}</p>
+            <li key={item.id} className="px-4 py-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="min-w-0 truncate text-zinc-100">{item.label}</p>
+                <p className={`shrink-0 font-mono tabular-nums ${item.state === "failed" ? "text-hawk-gold" : "text-zinc-100"}`}>
+                  {formatZar(item.totalCents)}
+                </p>
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-2">
                 <p className={`text-sm ${item.state === "failed" ? "text-hawk-gold" : "text-zinc-400"}`}>
                   {item.state === "failed"
                     ? `Could not be sent: ${item.lastError ?? "unknown error"}`
@@ -66,11 +71,8 @@ export function RecentInvoices({ invoices, loadError, queued, onDiscard, onChang
                       ? "Waiting for you to sign in"
                       : "Saved on this phone, waiting to sync"}
                 </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <p className="font-mono tabular-nums text-zinc-100">{formatZar(item.totalCents)}</p>
                 {item.state === "failed" ? (
-                  <button type="button" onClick={() => onDiscard(item.id)} className="min-h-[44px] px-2 text-sm text-zinc-300 underline">
+                  <button type="button" onClick={() => onDiscard(item.id)} className="min-h-[36px] shrink-0 px-2 text-xs text-zinc-300 underline">
                     Discard
                   </button>
                 ) : null}
@@ -88,40 +90,40 @@ export function RecentInvoices({ invoices, loadError, queued, onDiscard, onChang
         <ul className="mt-4 divide-y divide-hawk-obsidian-border border border-hawk-obsidian-border bg-hawk-obsidian-card">
           {invoices.map((invoice) => {
             const action = NEXT_ACTION[invoice.status];
+            const whatsappUrl = whatsappHref(SITE_CONFIG.contact.whatsappE164, formatInvoiceWhatsAppMessage(invoice));
             return (
-              <li key={invoice.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="font-mono text-sm tabular-nums text-zinc-300">
+              <li key={invoice.id} className="px-4 py-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="min-w-0 truncate font-mono text-sm tabular-nums text-zinc-300">
                     {invoice.invoiceNumber} <span className="text-zinc-400">{invoice.status.toLowerCase()}</span>
                   </p>
-                  <p className="truncate text-zinc-100">{invoice.clientName}</p>
+                  <p className="shrink-0 font-mono tabular-nums text-zinc-50">{formatZar(invoice.totalCents)}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <p className="font-mono tabular-nums text-zinc-50">{formatZar(invoice.totalCents)}</p>
-                  {(() => {
-                    const whatsappUrl = whatsappHref(SITE_CONFIG.contact.whatsappE164, formatInvoiceWhatsAppMessage(invoice));
-                    return whatsappUrl ? (
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="min-w-0 truncate text-zinc-100">{invoice.clientName}</p>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {whatsappUrl ? (
                       <a
                         href={whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="min-h-[44px] border border-zinc-700 px-3 text-sm text-zinc-100"
+                        className="min-h-[36px] border border-zinc-700 px-2.5 text-xs text-zinc-100"
                         aria-label={`Send ${invoice.invoiceNumber} on WhatsApp`}
                       >
                         WhatsApp
                       </a>
-                    ) : null;
-                  })()}
-                  {action ? (
-                    <button
-                      type="button"
-                      disabled={busyId === invoice.id}
-                      onClick={() => void advance(invoice, action.to)}
-                      className="min-h-[44px] border border-zinc-700 px-3 text-sm text-zinc-100 disabled:opacity-50"
-                    >
-                      {action.label}
-                    </button>
-                  ) : null}
+                    ) : null}
+                    {action ? (
+                      <button
+                        type="button"
+                        disabled={busyId === invoice.id}
+                        onClick={() => void advance(invoice, action.to)}
+                        className="min-h-[36px] border border-zinc-700 px-2.5 text-xs text-zinc-100 disabled:opacity-50"
+                      >
+                        {action.label}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </li>
             );
