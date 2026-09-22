@@ -454,3 +454,132 @@ body {
     opacity: 0.35;
   }
 }
+
+/* Print / PDF styles */
+@media print {
+  body {
+    background: white !important;
+    color: #111 !important;
+    font-size: 11pt !important;
+  }
+
+  header, nav, .btn, .btn-primary, .btn-secondary, .chamfer, .chamfer-2,
+  [data-testid="mic-button"], [data-testid="voice-status"], [data-testid="toggle-manual"],
+  .mic-ring, .print-document, .space-y-10 > section, .flex.flex-wrap.gap-3,
+  .mt-6, .mt-8, .mt-10, .mt-12, .pb-36, [role="alert"], [role="status"] {
+    display: none !important;
+  }
+
+  .print-document {
+    display: block !important;
+  }
+
+  .print-document * {
+    color: #111 !important;
+    background: transparent !important;
+  }
+}
+
+.print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 3px solid #111;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.print-company {
+  font-size: 22pt;
+  font-weight: 700;
+  margin: 0;
+  color: #111 !important;
+}
+
+.print-tagline {
+  font-size: 10pt;
+  color: #555 !important;
+  margin: 4px 0 0;
+}
+
+.print-right {
+  text-align: right;
+}
+
+.print-title {
+  font-size: 18pt;
+  font-weight: 700;
+  margin: 0;
+  color: #111 !important;
+}
+
+.print-meta {
+  font-size: 10pt;
+  color: #555 !important;
+  margin: 2px 0;
+}
+
+.print-section {
+  margin-bottom: 16px;
+}
+
+.print-section-title {
+  font-size: 11pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 6px;
+  color: #111 !important;
+}
+
+.print-section p {
+  margin: 2px 0;
+  font-size: 10pt;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 10pt;
+}
+
+.print-table th {
+  text-align: left;
+  border-bottom: 2px solid #111;
+  padding: 6px 8px;
+  font-weight: 600;
+  color: #111 !important;
+}
+
+.print-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 6px 8px;
+}
+
+.print-totals {
+  margin-left: auto;
+  width: 240px;
+  font-size: 10pt;
+}
+
+.print-totals div {
+  padding: 3px 0;
+}
+
+.print-footer {
+  margin-top: 32px;
+  border-top: 1px solid #ddd;
+  padding-top: 12px;
+  font-size: 9pt;
+  color: #666 !important;
+}
+
+.print-footer p {
+  margin: 2px 0;
+}
+
+.print-contact {
+  font-weight: 600;
+  color: #111 !important;
+}
