@@ -39,6 +39,7 @@ export interface InvoiceDraft {
   jobType: JobType;
   clientName: string;
   clientPhone: string;
+  clientEmail: string;
   vehicleDetails: string;
   assetDetails: string;
   vehicleTierKey: VehicleTierKey | null;
@@ -78,6 +79,7 @@ export function createDraft(jobType: JobType, idempotencyKey: string): InvoiceDr
     jobType,
     clientName: "",
     clientPhone: "",
+    clientEmail: "",
     vehicleDetails: "",
     assetDetails: "",
     vehicleTierKey: null,
@@ -274,6 +276,7 @@ export function draftToPayload(draft: InvoiceDraft, status: "DRAFT" | "ISSUED"):
     idempotencyKey: draft.idempotencyKey,
     clientName: draft.clientName,
     clientPhone: draft.clientPhone,
+    ...(draft.clientEmail.trim() ? { clientEmail: draft.clientEmail.trim() } : {}),
     depositCents: depositCents ?? 0,
     status,
     ...(draft.transcript.trim() ? { rawVoiceTranscript: draft.transcript.trim().slice(0, 1000) } : {}),
@@ -340,6 +343,7 @@ const storedDraftSchema = z.object({
     jobType: z.enum(JOB_TYPES),
     clientName: z.string().max(200),
     clientPhone: z.string().max(40),
+    clientEmail: z.string().max(254),
     vehicleDetails: z.string().max(300),
     assetDetails: z.string().max(300),
     vehicleTierKey: z.enum(TIER_KEYS).nullable(),

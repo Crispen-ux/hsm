@@ -75,6 +75,17 @@ export function ReviewForm({ draft, errors, setField, onLineChange, onAddLine, o
             autoComplete="off"
             placeholder="082 123 4567"
           />
+          <TextField
+            id="f-clientEmail"
+            label="Email"
+            hint="optional"
+            value={draft.clientEmail}
+            onChange={(value) => setField("clientEmail", value)}
+            error={errors.clientEmail}
+            inputMode="text"
+            autoComplete="email"
+            placeholder="client@example.com"
+          />
         </div>
       </section>
 

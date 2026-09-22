@@ -187,6 +187,13 @@ const invoiceBaseSchema = z.object({
   idempotencyKey: z.string().uuid(),
   clientName: requiredText(2, 120, "Client name"),
   clientPhone: saPhoneSchema,
+  clientEmail: z
+    .string()
+    .max(254, "Email is too long")
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Enter a valid email address")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v === "" ? undefined : v)),
   rawVoiceTranscript: optionalText(MAX_TRANSCRIPT_LENGTH, "Transcript"),
   depositCents: centsSchema.default(0),
   status: z.enum(["DRAFT", "ISSUED"]).default("DRAFT"),

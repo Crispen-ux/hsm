@@ -135,6 +135,7 @@ model Invoice {
   status             InvoiceStatus    @default(DRAFT)
   clientName         String           @map("client_name")
   clientPhone        String           @map("client_phone")
+  clientEmail        String?          @map("client_email")
   vehicleDetails     String?          @map("vehicle_details")
   assetDetails       String?          @map("asset_details")
   containerSize      ContainerSize?   @map("container_size")

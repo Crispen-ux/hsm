@@ -17,6 +17,7 @@ export interface InvoiceSummary {
   status: InvoiceStatus;
   clientName: string;
   clientPhone: string;
+  clientEmail: string | null;
   subtotalCents: number;
   vatCents: number;
   totalCents: number;
@@ -42,6 +43,7 @@ interface InvoiceRow {
   status: InvoiceStatus;
   clientName: string;
   clientPhone: string;
+  clientEmail: string | null;
   subtotalCents: number;
   vatCents: number;
   totalCents: number;
@@ -56,6 +58,7 @@ const SUMMARY_SELECT = {
   status: true,
   clientName: true,
   clientPhone: true,
+  clientEmail: true,
   subtotalCents: true,
   vatCents: true,
   totalCents: true,
@@ -74,6 +77,7 @@ export function toInvoiceSummary(row: InvoiceRow): InvoiceSummary {
     status: row.status,
     clientName: row.clientName,
     clientPhone: row.clientPhone,
+    clientEmail: row.clientEmail,
     subtotalCents: row.subtotalCents,
     vatCents: row.vatCents,
     totalCents: row.totalCents,
@@ -145,6 +149,7 @@ export async function createInvoiceRecord(
         status: input.status,
         clientName: input.clientName,
         clientPhone: input.clientPhone,
+        clientEmail: input.clientEmail ?? null,
         vehicleDetails: input.vehicleDetails,
         assetDetails: input.assetDetails,
         containerSize: input.containerSize,

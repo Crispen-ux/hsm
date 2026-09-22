@@ -358,6 +358,10 @@ function Success({ referenceCode }: { referenceCode: string }) {
     SITE_CONFIG.contact.whatsappE164,
     `Hi, my quote reference is ${referenceCode}. Here are photos of the job.`,
   );
+  const shareDetails = whatsappHref(
+    SITE_CONFIG.contact.whatsappE164,
+    `Hi, I would like a quote from Hawk Mobile Rubberising.\n\nMy reference code is: ${referenceCode}\n\nPlease contact me to discuss the job.`,
+  );
   return (
     <div id="quote" className="chamfer-2 plate scroll-mt-24">
       <div className="chamfer-2 plate-inner">
@@ -369,6 +373,11 @@ function Success({ referenceCode }: { referenceCode: string }) {
           {whatsapp ? (
             <a href={whatsapp} rel="noopener noreferrer" target="_blank" className="btn btn-secondary chamfer mt-6">
               Send photos on WhatsApp
+            </a>
+          ) : null}
+          {shareDetails ? (
+            <a href={shareDetails} rel="noopener noreferrer" target="_blank" className="btn btn-secondary chamfer mt-3">
+              Share quote details on WhatsApp
             </a>
           ) : null}
           <p className="mt-6 text-sm text-zinc-400">

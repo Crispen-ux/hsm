@@ -56,7 +56,7 @@ export const SPEC_DEFINITIONS: readonly SpecDefinition[] = [
 ];
 
 export const SITE_CONFIG: SiteConfig = {
-  contact: { phoneDisplay: null, phoneE164: null, whatsappE164: null, email: null },
+  contact: { phoneDisplay: null, phoneE164: null, whatsappE164: "+27000000000", email: null },
   branches: [],
   telemetry: { warrantyYears: null, vehiclesCoated: null, containersCoated: null, responseHours: null },
   beforeAfter: null,

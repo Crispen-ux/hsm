@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { updateInvoiceStatus } from "@/app/actions/invoices";
 import type { InvoiceSummaryView } from "@/components/dashboard/types";
+import { formatInvoiceWhatsAppMessage } from "@/lib/invoice-whatsapp";
 import { formatZar } from "@/lib/money";
 import type { QueuedInvoice } from "@/lib/offline-queue";
+import { whatsappHref, SITE_CONFIG } from "@/lib/site-config";
 
 interface RecentInvoicesProps {
   invoices: readonly InvoiceSummaryView[];
@@ -96,6 +98,20 @@ export function RecentInvoices({ invoices, loadError, queued, onDiscard, onChang
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <p className="font-mono tabular-nums text-zinc-50">{formatZar(invoice.totalCents)}</p>
+                  {(() => {
+                    const whatsappUrl = whatsappHref(SITE_CONFIG.contact.whatsappE164, formatInvoiceWhatsAppMessage(invoice));
+                    return whatsappUrl ? (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="min-h-[44px] border border-zinc-700 px-3 text-sm text-zinc-100"
+                        aria-label={`Send ${invoice.invoiceNumber} on WhatsApp`}
+                      >
+                        WhatsApp
+                      </a>
+                    ) : null;
+                  })()}
                   {action ? (
                     <button
                       type="button"

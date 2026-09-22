@@ -7,7 +7,9 @@ import { indicativeContainerQuote } from "@/lib/container-quote";
 import { hasAnyZone, scopeFromZones, zonesFromScope, type ZoneSelection } from "@/lib/container-zones";
 import { CONTAINER_SCOPE_LABELS, type ContainerSize, type ServiceLocation } from "@/lib/domain";
 import { formatZar } from "@/lib/money";
-import { buildQuoteHref } from "@/lib/quote-link";
+import { buildQuoteHref, type QuotePrefill } from "@/lib/quote-link";
+import { formatQuoteWhatsAppMessage, buildQuoteShareMessage } from "@/lib/quote-whatsapp";
+import { whatsappHref, SITE_CONFIG } from "@/lib/site-config";
 import { cn } from "@/lib/cn";
 
 type ZoneKey = keyof ZoneSelection;
@@ -245,6 +247,27 @@ export function ContainerConfigurator() {
           <ButtonLink href={href} className="mt-6 w-full sm:w-auto">
             Get a quote for this
           </ButtonLink>
+          {(() => {
+            if (!scope) return null;
+            const prefill: QuotePrefill = { service: "CONTAINER", size, scope, quantity, location };
+            const msg = formatQuoteWhatsAppMessage({
+              jobType: "CONTAINER",
+              containerQuoteInput: { size, scope, quantity, location },
+              quote,
+            });
+            const shareMsg = buildQuoteShareMessage(prefill, msg);
+            const whatsappUrl = whatsappHref(SITE_CONFIG.contact.whatsappE164, shareMsg);
+            return whatsappUrl ? (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-block w-full min-h-[48px] border border-zinc-700 px-4 py-3 text-center text-sm text-zinc-100 sm:w-auto"
+              >
+                Share on WhatsApp
+              </a>
+            ) : null;
+          })()}
         </div>
       </div>
     </div>
