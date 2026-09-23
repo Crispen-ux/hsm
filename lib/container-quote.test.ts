@@ -43,8 +43,7 @@ describe("indicativeContainerQuote", () => {
     expect(quote?.lines[0]?.quantityMilli).toBe(27_800);
     expect(quote?.lines[0]?.lineTotalCents).toBe(278_000);
     expect(quote?.subtotalCents).toBe(278_000);
-    expect(quote?.vatCents).toBe(41_700);
-    expect(quote?.totalCents).toBe(319_700);
+    expect(quote?.totalCents).toBe(278_000);
   });
 
   it("adds mobilisation only for on-site work", () => {

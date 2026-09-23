@@ -41,7 +41,6 @@ function TierPlate({ tier }: { tier: VehicleTier }) {
       <h3 className="display-narrow text-chrome text-4xl">{tier.label}</h3>
       <div className="mt-6">
         <Price cents={tier.priceCents} />
-        <p className="mt-2 text-sm text-zinc-400">VAT is added on the invoice.</p>
       </div>
       <div className="mt-6 text-zinc-400">
         {tier.includes.length > 0 ? (

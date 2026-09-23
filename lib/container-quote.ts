@@ -33,7 +33,6 @@ export interface ContainerQuoteLine {
 export interface ContainerQuote {
   lines: ContainerQuoteLine[];
   subtotalCents: number;
-  vatCents: number;
   totalCents: number;
 }
 
@@ -88,7 +87,6 @@ export function indicativeContainerQuote(
   return {
     lines,
     subtotalCents: totals.subtotalCents,
-    vatCents: totals.vatCents,
     totalCents: totals.totalCents,
   };
 }

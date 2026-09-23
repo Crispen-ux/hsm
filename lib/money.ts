@@ -1,5 +1,4 @@
 export const MAX_CENTS = 2_147_483_647;
-export const VAT_RATE_PERCENT = 15;
 
 export type MoneyErrorCode = "NOT_INTEGER" | "NEGATIVE" | "OVERFLOW" | "DEPOSIT_EXCEEDS_TOTAL";
 
@@ -21,7 +20,6 @@ export interface PricedLine {
 export interface InvoiceTotals {
   lineTotals: number[];
   subtotalCents: number;
-  vatCents: number;
   totalCents: number;
   depositCents: number;
   balanceCents: number;
@@ -62,17 +60,6 @@ export function addCents(...amounts: number[]): number {
   return toCents(total);
 }
 
-export function vatFromExclusive(exclusiveCents: number): number {
-  const exclusive = toBigIntStrict(exclusiveCents, "exclusiveCents");
-  return toCents(divRoundHalfUp(exclusive * BigInt(VAT_RATE_PERCENT), 100n));
-}
-
-export function vatFromInclusive(inclusiveCents: number): number {
-  const inclusive = toBigIntStrict(inclusiveCents, "inclusiveCents");
-  const rate = BigInt(VAT_RATE_PERCENT);
-  return toCents(divRoundHalfUp(inclusive * rate, 100n + rate));
-}
-
 export function lineTotalCentsForQuantity(unitPriceCents: number, quantityMilli: number): number {
   const unit = toBigIntStrict(unitPriceCents, "unitPriceCents");
   const quantity = toBigIntStrict(quantityMilli, "quantityMilli");
@@ -82,8 +69,7 @@ export function lineTotalCentsForQuantity(unitPriceCents: number, quantityMilli:
 export function computeInvoiceTotals(lines: readonly PricedLine[], depositCents: number): InvoiceTotals {
   const lineTotals = lines.map((line) => lineTotalCentsForQuantity(line.unitPriceCents, line.quantityMilli));
   const subtotalCents = addCents(...lineTotals);
-  const vatCents = vatFromExclusive(subtotalCents);
-  const totalCents = addCents(subtotalCents, vatCents);
+  const totalCents = subtotalCents;
   const deposit = toCents(toBigIntStrict(depositCents, "depositCents"));
 
   if (deposit > totalCents) {
@@ -93,7 +79,6 @@ export function computeInvoiceTotals(lines: readonly PricedLine[], depositCents:
   return {
     lineTotals,
     subtotalCents,
-    vatCents,
     totalCents,
     depositCents: deposit,
     balanceCents: totalCents - deposit,

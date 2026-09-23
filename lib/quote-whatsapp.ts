@@ -45,8 +45,6 @@ export function formatQuoteWhatsAppMessage(input: QuoteMessageInput): string {
         lines.push(`- ${line.description}: ${formatZar(line.lineTotalCents)}`);
       });
       lines.push("");
-      lines.push(`Subtotal: ${formatZar(input.quote.subtotalCents)}`);
-      lines.push(`VAT: ${formatZar(input.quote.vatCents)}`);
       lines.push(`*Total: ${formatZar(input.quote.totalCents)}*`);
     } else {
       lines.push("Price: Confirmed on inspection");

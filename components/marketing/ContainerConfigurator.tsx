@@ -217,16 +217,6 @@ export function ContainerConfigurator() {
             </div>
             {quote ? (
               <>
-                <div className="flex items-baseline gap-3">
-                  <dt className="text-zinc-300">Subtotal</dt>
-                  <span className="spec-leader" aria-hidden />
-                  <dd className="text-right font-mono tabular-nums text-zinc-50">{formatZar(quote.subtotalCents)}</dd>
-                </div>
-                <div className="flex items-baseline gap-3">
-                  <dt className="text-zinc-300">VAT 15%</dt>
-                  <span className="spec-leader" aria-hidden />
-                  <dd className="text-right font-mono tabular-nums text-zinc-50">{formatZar(quote.vatCents)}</dd>
-                </div>
                 <div className="flex items-baseline gap-3 border-t-2 border-zinc-600 pt-3">
                   <dt className="font-semibold text-zinc-100">Indicative total</dt>
                   <span className="spec-leader" aria-hidden />

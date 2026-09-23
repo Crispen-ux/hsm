@@ -8,8 +8,6 @@ import {
   lineTotalCentsForQuantity,
   parseRandsToCents,
   splitZar,
-  vatFromExclusive,
-  vatFromInclusive,
 } from "@/lib/money";
 
 describe("divRoundHalfUp", () => {
@@ -27,22 +25,6 @@ describe("divRoundHalfUp", () => {
   it("rejects non-positive denominators and negative numerators", () => {
     expect(() => divRoundHalfUp(1n, 0n)).toThrow(RangeError);
     expect(() => divRoundHalfUp(-1n, 2n)).toThrow(RangeError);
-  });
-});
-
-describe("vat", () => {
-  it("computes 15% exactly for the Full tier", () => {
-    expect(vatFromExclusive(520_000)).toBe(78_000);
-  });
-
-  it("rounds half up", () => {
-    expect(vatFromExclusive(10)).toBe(2);
-    expect(vatFromExclusive(12_345)).toBe(1_852);
-    expect(vatFromExclusive(0)).toBe(0);
-  });
-
-  it("extracts VAT from an inclusive amount", () => {
-    expect(vatFromInclusive(115_00)).toBe(15_00);
   });
 });
 
@@ -71,14 +53,13 @@ describe("computeInvoiceTotals", () => {
     expect(totals).toEqual({
       lineTotals: [520_000],
       subtotalCents: 520_000,
-      vatCents: 78_000,
-      totalCents: 598_000,
+      totalCents: 520_000,
       depositCents: 50_000,
-      balanceCents: 548_000,
+      balanceCents: 470_000,
     });
   });
 
-  it("applies VAT once on the subtotal", () => {
+  it("sums lines without VAT", () => {
     const totals = computeInvoiceTotals(
       [
         { unitPriceCents: 333, quantityMilli: 1_000 },
@@ -88,8 +69,7 @@ describe("computeInvoiceTotals", () => {
       0,
     );
     expect(totals.subtotalCents).toBe(999);
-    expect(totals.vatCents).toBe(150);
-    expect(totals.totalCents).toBe(1_149);
+    expect(totals.totalCents).toBe(999);
   });
 
   it("rejects a deposit above the total", () => {

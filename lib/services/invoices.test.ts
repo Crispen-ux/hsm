@@ -24,7 +24,6 @@ interface StoredInvoice {
   clientName: string;
   clientPhone: string;
   subtotalCents: number;
-  vatCents: number;
   totalCents: number;
   depositCents: number;
   createdById: string;
@@ -134,10 +133,9 @@ describe("createInvoiceRecord", () => {
     expect(second.ok && second.data.invoice.invoiceNumber).toBe("HAWK-2026-0002");
     expect(first.ok && first.data.invoice).toMatchObject({
       subtotalCents: 520_000,
-      vatCents: 78_000,
-      totalCents: 598_000,
+      totalCents: 520_000,
       depositCents: 50_000,
-      balanceCents: 548_000,
+      balanceCents: 470_000,
       status: "DRAFT",
     });
     expect(invoices[0]?.lines[0]).toMatchObject({ position: 0, lineTotalCents: 520_000, tierKey: "VEHICLE_FULL" });
@@ -162,7 +160,7 @@ describe("createInvoiceRecord", () => {
     });
     const result = await createInvoiceRecord(client, input, crew, NOW);
     expect(result.ok && result.data.invoice.subtotalCents).toBe(171_287);
-    expect(result.ok && result.data.invoice.vatCents).toBe(25_693);
+    expect(result.ok && result.data.invoice.totalCents).toBe(171_287);
     expect(invoices[0]?.lines[0]).toMatchObject({ lineTotalCents: 171_287, unit: "SQM" });
   });
 
@@ -201,8 +199,7 @@ describe("listInvoicesForActor", () => {
       clientName: "Client",
       clientPhone: "+27821234567",
       subtotalCents: 100,
-      vatCents: 15,
-      totalCents: 115,
+      totalCents: 100,
       depositCents: 0,
       createdAt: NOW,
     };

@@ -23,8 +23,6 @@ export function TotalsReadout({ result }: { result: DraftTotals }) {
         </h2>
         {totals ? (
           <dl className="mt-4 space-y-3" data-testid="totals">
-            <Row label="Subtotal" cents={totals.subtotalCents} />
-            <Row label="VAT 15%" cents={totals.vatCents} />
             <div className="border-t-2 border-zinc-500 pt-3">
               <Row label="Total" cents={totals.totalCents} strong />
             </div>

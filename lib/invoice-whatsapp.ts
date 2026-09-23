@@ -15,8 +15,6 @@ export function formatInvoiceWhatsAppMessage(invoice: InvoiceSummary): string {
   }
 
   lines.push("");
-  lines.push(`Subtotal: ${formatZar(invoice.subtotalCents)}`);
-  lines.push(`VAT: ${formatZar(invoice.vatCents)}`);
   lines.push(`*Total: ${formatZar(invoice.totalCents)}*`);
 
   if (invoice.depositCents > 0) {

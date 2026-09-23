@@ -128,8 +128,7 @@ function computeTotals(lines: QuoteLine[]) {
       subtotal += Math.round((price * qty) / 1000);
     }
   }
-  const vat = Math.round(subtotal * 0.15);
-  return { subtotal, vat, total: subtotal + vat };
+  return { subtotal, total: subtotal };
 }
 
 function TextField(props: { id: string; label: string; value: string; onChange: (v: string) => void; hint?: string; placeholder?: string; inputMode?: "text" | "tel" | "email" }) {
@@ -215,7 +214,7 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
   }, []);
 
   const shareWhatsApp = useCallback(() => {
-    const msg = `*Hawk Mobile Rubberising*\nQuote ${quoteNumber}\n\nClient: ${data.clientName || "N/A"}\n${data.jobType === "VEHICLE" ? `Vehicle: ${data.vehicleDetails || "N/A"}` : data.jobType === "CONTAINER" ? `Container: ${CONTAINER_SIZE_LABELS[data.containerSize]} - ${CONTAINER_SCOPE_LABELS[data.containerScope]} x ${data.containerQuantity}` : "Industrial coating"}\n\n${allLines.map((l) => `- ${l.description}: ${l.unit === "SQM" ? `R${l.unitPrice}/m² × ${l.quantity}m²` : `R${l.unitPrice} × ${l.quantity}`}`).join("\n")}\n\nSubtotal: ${formatZar(totals.subtotal)}\nVAT 15%: ${formatZar(totals.vat)}\n*Total: ${formatZar(totals.total)}*\n\nValid for 30 days. Final price confirmed after inspection.\nHawk Mobile Rubberising - Polyurea & Rubber Coatings`;
+    const msg = `*Hawk Mobile Rubberising*\nQuote ${quoteNumber}\n\nClient: ${data.clientName || "N/A"}\n${data.jobType === "VEHICLE" ? `Vehicle: ${data.vehicleDetails || "N/A"}` : data.jobType === "CONTAINER" ? `Container: ${CONTAINER_SIZE_LABELS[data.containerSize]} - ${CONTAINER_SCOPE_LABELS[data.containerScope]} x ${data.containerQuantity}` : "Industrial coating"}\n\n${allLines.map((l) => `- ${l.description}: ${l.unit === "SQM" ? `R${l.unitPrice}/m² × ${l.quantity}m²` : `R${l.unitPrice} × ${l.quantity}`}`).join("\n")}\n\n*Total: ${formatZar(totals.total)}*\n\nValid for 30 days. Final price confirmed after inspection.\nHawk Mobile Rubberising - Polyurea & Rubber Coatings`;
     const url = whatsappHref(SITE_CONFIG.contact.whatsappE164, msg);
     if (url) window.open(url, "_blank");
   }, [data, allLines, totals, quoteNumber]);
@@ -327,8 +326,6 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
 
         <div className="border-t border-hawk-obsidian-border pt-6">
           <dl className="space-y-2">
-            <div className="flex justify-between"><dt className="text-zinc-300">Subtotal</dt><dd className="font-mono tabular-nums text-zinc-50">{formatZar(totals.subtotal)}</dd></div>
-            <div className="flex justify-between"><dt className="text-zinc-300">VAT 15%</dt><dd className="font-mono tabular-nums text-zinc-50">{formatZar(totals.vat)}</dd></div>
             <div className="flex justify-between border-t-2 border-zinc-600 pt-2"><dt className="font-semibold text-zinc-100">Total</dt><dd className="font-mono text-2xl tabular-nums text-white">{formatZar(totals.total)}</dd></div>
           </dl>
         </div>
@@ -395,14 +392,6 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
         </table>
 
         <div className="print-totals-section">
-          <div className="print-totals-row">
-            <span>Subtotal:</span>
-            <span>{formatZar(totals.subtotal)}</span>
-          </div>
-          <div className="print-totals-row">
-            <span>VAT (15%):</span>
-            <span>{formatZar(totals.vat)}</span>
-          </div>
           <div className="print-totals-row print-total-due">
             <span>TOTAL DUE:</span>
             <span>{formatZar(totals.total)}</span>

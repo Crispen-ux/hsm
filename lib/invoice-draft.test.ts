@@ -115,11 +115,11 @@ describe("syncAutoLines", () => {
 });
 
 describe("draftTotals", () => {
-  it("computes VAT and balance with integer maths", () => {
+  it("computes balance with integer maths", () => {
     const draft = fromSpeech("Hilux full deposit five hundred");
     const { totals, error } = draftTotals(draft);
     expect(error).toBeNull();
-    expect(totals).toMatchObject({ subtotalCents: 520_000, vatCents: 78_000, totalCents: 598_000, depositCents: 50_000, balanceCents: 548_000 });
+    expect(totals).toMatchObject({ subtotalCents: 520_000, totalCents: 520_000, depositCents: 50_000, balanceCents: 470_000 });
   });
 
   it("reports a deposit above the total", () => {
@@ -137,7 +137,7 @@ describe("draftTotals", () => {
       ...createDraft("CONTAINER", KEY),
       lines: [{ ...blankLine(), description: "Floor", unit: "SQM", quantity: "13.875", unitPrice: "123.45" }],
     };
-    expect(draftTotals(draft).totals).toMatchObject({ subtotalCents: 171_287, vatCents: 25_693 });
+    expect(draftTotals(draft).totals).toMatchObject({ subtotalCents: 171_287, totalCents: 171_287 });
   });
 });
 

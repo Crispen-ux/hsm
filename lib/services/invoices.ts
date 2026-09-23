@@ -19,7 +19,6 @@ export interface InvoiceSummary {
   clientPhone: string;
   clientEmail: string | null;
   subtotalCents: number;
-  vatCents: number;
   totalCents: number;
   depositCents: number;
   balanceCents: number;
@@ -45,7 +44,6 @@ interface InvoiceRow {
   clientPhone: string;
   clientEmail: string | null;
   subtotalCents: number;
-  vatCents: number;
   totalCents: number;
   depositCents: number;
   createdAt: Date;
@@ -60,7 +58,6 @@ const SUMMARY_SELECT = {
   clientPhone: true,
   clientEmail: true,
   subtotalCents: true,
-  vatCents: true,
   totalCents: true,
   depositCents: true,
   createdAt: true,
@@ -79,7 +76,6 @@ export function toInvoiceSummary(row: InvoiceRow): InvoiceSummary {
     clientPhone: row.clientPhone,
     clientEmail: row.clientEmail,
     subtotalCents: row.subtotalCents,
-    vatCents: row.vatCents,
     totalCents: row.totalCents,
     depositCents: row.depositCents,
     balanceCents: row.totalCents - row.depositCents,
@@ -159,7 +155,7 @@ export async function createInvoiceRecord(
         siteAddress: input.siteAddress,
         rawVoiceTranscript: input.rawVoiceTranscript,
         subtotalCents: totals.subtotalCents,
-        vatCents: totals.vatCents,
+        vatCents: 0,
         totalCents: totals.totalCents,
         depositCents: totals.depositCents,
         createdById: actor.id,

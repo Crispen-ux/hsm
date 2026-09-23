@@ -18,7 +18,6 @@ interface InvoicePrintData {
   jobType: string;
   lines: InvoiceLine[];
   subtotalCents: number;
-  vatCents: number;
   totalCents: number;
   depositCents: number;
   createdAt: string;
@@ -80,16 +79,6 @@ export function InvoicePrint({ invoice }: InvoicePrintProps) {
         )}
 
         <div className="print-totals-section">
-          <div className="print-totals-row">
-            <span>Subtotal:</span>
-            <span>{formatZar(invoice.subtotalCents)}</span>
-          </div>
-          {invoice.vatCents > 0 && (
-            <div className="print-totals-row">
-              <span>VAT (15%):</span>
-              <span>{formatZar(invoice.vatCents)}</span>
-            </div>
-          )}
           <div className="print-totals-row print-total-due">
             <span>TOTAL DUE:</span>
             <span>{formatZar(invoice.totalCents)}</span>
