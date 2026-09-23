@@ -150,6 +150,15 @@ export function InvoiceEngine({ invoices, loadError }: InvoiceEngineProps) {
     [],
   );
 
+  const removeAutoLine = useCallback(
+    (key: string) => setDraft((current) => ({
+      ...current,
+      removedAutoLines: [...current.removedAutoLines, key],
+      lines: current.lines.filter((line) => line.key !== key),
+    })),
+    [],
+  );
+
   const selectProduct = useCallback((key: string, product: import("@/lib/product-catalogue").CatalogueProduct) => {
     setDraft((current) => ({
       ...current,
@@ -292,7 +301,7 @@ export function InvoiceEngine({ invoices, loadError }: InvoiceEngineProps) {
       <VoicePanel speech={speech} transcript={draft.transcript} parsed={parsed} onTranscriptChange={changeTranscript} onClear={clearTranscript} />
       <ParsedChips parsed={parsed} />
 
-      <ReviewForm draft={draft} errors={errors} setField={setField} onLineChange={changeLine} onAddLine={addLine} onRemoveLine={removeLine} onProductSelect={selectProduct} />
+      <ReviewForm draft={draft} errors={errors} setField={setField} onLineChange={changeLine} onAddLine={addLine} onRemoveLine={removeLine} onRemoveAutoLine={removeAutoLine} onProductSelect={selectProduct} />
 
       <div className="mt-10">
         <TotalsReadout result={totals} />

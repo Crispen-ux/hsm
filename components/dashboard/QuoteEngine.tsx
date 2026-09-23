@@ -47,6 +47,7 @@ interface QuoteData {
   siteAddress: string;
   notes: string;
   lines: QuoteLine[];
+  removedAutoLines: string[];
 }
 
 const SIZES: readonly Exclude<ContainerSize, "OTHER">[] = ["FT20", "FT40", "FT40_HC"];
@@ -70,6 +71,7 @@ function createInitial(): QuoteData {
     siteAddress: "",
     notes: "",
     lines: [{ id: newLineId(), description: "", unit: "EACH", quantity: "1", unitPrice: "" }],
+    removedAutoLines: [],
   };
 }
 
@@ -172,6 +174,10 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
     setData((prev) => ({ ...prev, lines: prev.lines.filter((l) => l.id !== id) }));
   }, []);
 
+  const removeAutoLine = useCallback((id: string) => {
+    setData((prev) => ({ ...prev, removedAutoLines: [...prev.removedAutoLines, id] }));
+  }, []);
+
   const selectProduct = useCallback((lineId: string, product: CatalogueProduct) => {
     setData((prev) => ({
       ...prev,
@@ -189,7 +195,7 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
   }, []);
 
   const allLines = useMemo(() => {
-    const auto = autoLines(data);
+    const auto = autoLines(data).filter((l) => !data.removedAutoLines.includes(l.id));
     const manual = data.lines.filter((l) => !l.id.startsWith("auto-"));
     return [...auto, ...manual];
   }, [data]);
@@ -301,14 +307,13 @@ export function QuoteEngine({ onSaved }: QuoteEngineProps) {
                     onSelect={(product) => selectProduct(line.id, product)}
                   />
                 )}
-                <div className="grid gap-3" style={{ gridTemplateColumns: "1fr auto auto auto" }}>
+                <div className="grid gap-3" style={{ gridTemplateColumns: "1fr auto auto auto auto" }}>
                   <input type="text" value={line.description} onChange={(e) => updateLine(line.id, { description: e.target.value })} disabled={isAuto} placeholder="Description" className="field-input col-span-1" />
                   <input type="text" value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} disabled={isAuto} placeholder={line.unit === "SQM" ? "m²" : "Qty"} className="field-input w-20" />
                   <input type="text" value={line.unitPrice} onChange={(e) => updateLine(line.id, { unitPrice: e.target.value })} disabled={isAuto} placeholder="R each" className="field-input w-24" />
-                  {!isAuto ? (
-                    <button type="button" onClick={() => removeLine(line.id)} className="min-h-[44px] px-2 text-sm text-zinc-400">×</button>
-                  ) : <span />}
+                  <button type="button" onClick={() => isAuto ? removeAutoLine(line.id) : removeLine(line.id)} className="min-h-[44px] px-2 text-sm text-zinc-400">×</button>
                 </div>
+                {isAuto && <p className="text-xs text-zinc-500">Suggested from job type. Click × to remove.</p>}
               </div>
             );
           })}

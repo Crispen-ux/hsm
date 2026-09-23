@@ -51,6 +51,7 @@ export interface InvoiceDraft {
   deposit: string;
   transcript: string;
   lines: DraftLine[];
+  removedAutoLines: string[];
 }
 
 export interface PricingConfig {
@@ -91,6 +92,7 @@ export function createDraft(jobType: JobType, idempotencyKey: string): InvoiceDr
     deposit: "",
     transcript: "",
     lines: [],
+    removedAutoLines: [],
   };
 }
 
@@ -148,7 +150,8 @@ function autoLines(draft: InvoiceDraft, pricing: PricingConfig): DraftLine[] {
 
 export function syncAutoLines(draft: InvoiceDraft, pricing: PricingConfig = DEFAULT_PRICING): InvoiceDraft {
   const manual = draft.lines.filter((line) => !line.auto);
-  return { ...draft, lines: [...autoLines(draft, pricing), ...manual] };
+  const auto = autoLines(draft, pricing).filter((line) => !draft.removedAutoLines.includes(line.key));
+  return { ...draft, lines: [...auto, ...manual] };
 }
 
 export function applyParsedSpeech(
@@ -355,6 +358,7 @@ const storedDraftSchema = z.object({
     deposit: z.string().max(20),
     transcript: z.string().max(1200),
     lines: z.array(draftLineSchema).max(30),
+    removedAutoLines: z.array(z.string()).max(10).optional().default([]),
   }),
   touched: z.array(z.string().max(40)).max(40),
 });

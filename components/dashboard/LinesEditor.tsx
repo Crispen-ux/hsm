@@ -13,6 +13,7 @@ interface LinesEditorProps {
   onChange: (key: string, patch: Partial<DraftLine>) => void;
   onAdd: () => void;
   onRemove: (key: string) => void;
+  onRemoveAutoLine?: (key: string) => void;
   onProductSelect?: (key: string, product: CatalogueProduct) => void;
 }
 
@@ -32,7 +33,7 @@ function lineTotal(line: DraftLine): string | null {
   }
 }
 
-export function LinesEditor({ lines, errors, onChange, onAdd, onRemove, onProductSelect }: LinesEditorProps) {
+export function LinesEditor({ lines, errors, onChange, onAdd, onRemove, onRemoveAutoLine, onProductSelect }: LinesEditorProps) {
   return (
     <section aria-labelledby="lines-title">
       <h2 id="lines-title" className="display-narrow text-chrome text-2xl">
@@ -95,11 +96,15 @@ export function LinesEditor({ lines, errors, onChange, onAdd, onRemove, onProduc
               </div>
               <div className="mt-3 flex items-center justify-between gap-3">
                 <p className="text-sm text-zinc-400">
-                  {line.auto ? "Suggested from your choices. Edit to override." : "Your line"}
+                  {line.auto ? "Suggested. Edit or remove." : "Your line"}
                 </p>
                 <div className="flex items-center gap-3">
                   <p className="font-mono tabular-nums text-zinc-50">{total ?? "-"}</p>
-                  <button type="button" onClick={() => onRemove(line.key)} className="min-h-[44px] px-2 text-sm text-zinc-300 underline">
+                  <button
+                    type="button"
+                    onClick={() => line.auto && onRemoveAutoLine ? onRemoveAutoLine(line.key) : onRemove(line.key)}
+                    className="min-h-[44px] px-2 text-sm text-zinc-300 underline"
+                  >
                     Remove
                   </button>
                 </div>

@@ -9,12 +9,10 @@ const LANGUAGE_CHAIN = ["en-ZA", "en-GB", "en-US", "en-AU", "en-IN"] as const;
 const RESTART_BACKOFF_MS = [0, 200, 500, 1000, 2000];
 const MAX_RESTARTS = 5;
 const NOISE_MIN_LENGTH = 2;
-const NOISE_WORDS = new Set([
-  "uh", "um", "er", "ah", "hmm", "mhm", "hm", "oh", "okay", "ok", "yes", "no",
-  "the", "a", "an", "i", "you", "he", "she", "it", "we", "they", "me", "him",
-  "her", "us", "them", "my", "your", "his", "its", "our", "their",
+const FILLER_SOUNDS = new Set([
+  "uh", "um", "er", "ah", "hmm", "mhm", "hm", "oh", "uhh", "umm", "err",
 ]);
-const FILLER_PATTERN = /\b(?:um|uh|er|ah|hmm|mhm|hm|oh|like|you know|basically|actually|so|right|just)\b/gi;
+const FILLER_PATTERN = /\b(?:um|uh|er|ah|hmm|mhm|hm|oh)\b/gi;
 
 function recognitionConstructor(): SpeechRecognitionConstructorLike | null {
   if (typeof window === "undefined") {
@@ -50,8 +48,7 @@ function cleanTranscript(raw: string): string {
 function isNoise(text: string): boolean {
   const cleaned = text.trim().toLowerCase();
   if (cleaned.length < NOISE_MIN_LENGTH) return true;
-  if (NOISE_WORDS.has(cleaned)) return true;
-  if (cleaned.split(/\s+/).length === 1 && NOISE_WORDS.has(cleaned)) return true;
+  if (FILLER_SOUNDS.has(cleaned)) return true;
   return false;
 }
 
@@ -73,7 +70,6 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
   const restartCount = useRef(0);
   const lastFinalText = useRef("");
   const lastFinalTime = useRef(0);
-  const seenFinals = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -125,7 +121,6 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
 
     userStopped.current = false;
     restartCount.current = 0;
-    seenFinals.current.clear();
     lastFinalText.current = "";
     lastFinalTime.current = 0;
     languageIndex.current = 0;
@@ -155,15 +150,11 @@ export function useSpeechCapture(onFinal: (text: string) => void): SpeechCapture
             const now = Date.now();
             if (
               dedupeKey === lastFinalText.current &&
-              now - lastFinalTime.current < 3000
+              now - lastFinalTime.current < 2000
             ) {
               continue;
             }
-            if (seenFinals.current.has(dedupeKey)) {
-              continue;
-            }
 
-            seenFinals.current.add(dedupeKey);
             lastFinalText.current = dedupeKey;
             lastFinalTime.current = now;
 

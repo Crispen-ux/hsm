@@ -22,6 +22,7 @@ interface ReviewFormProps {
   onLineChange: (key: string, patch: Partial<DraftLine>) => void;
   onAddLine: () => void;
   onRemoveLine: (key: string) => void;
+  onRemoveAutoLine?: (key: string) => void;
   onProductSelect?: (key: string, product: CatalogueProduct) => void;
 }
 
@@ -58,7 +59,7 @@ function TextField(props: {
   );
 }
 
-export function ReviewForm({ draft, errors, setField, onLineChange, onAddLine, onRemoveLine, onProductSelect }: ReviewFormProps) {
+export function ReviewForm({ draft, errors, setField, onLineChange, onAddLine, onRemoveLine, onRemoveAutoLine, onProductSelect }: ReviewFormProps) {
   return (
     <div className="mt-8 space-y-10">
       <section aria-labelledby="client-title">
@@ -211,7 +212,7 @@ export function ReviewForm({ draft, errors, setField, onLineChange, onAddLine, o
         ) : null}
       </section>
 
-      <LinesEditor lines={draft.lines} errors={errors} onChange={onLineChange} onAdd={onAddLine} onRemove={onRemoveLine} onProductSelect={onProductSelect} />
+      <LinesEditor lines={draft.lines} errors={errors} onChange={onLineChange} onAdd={onAddLine} onRemove={onRemoveLine} onRemoveAutoLine={onRemoveAutoLine} onProductSelect={onProductSelect} />
 
       <section aria-labelledby="deposit-title">
         <h2 id="deposit-title" className="display-narrow text-chrome text-2xl">
